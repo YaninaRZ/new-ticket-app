@@ -1,13 +1,18 @@
-import React from 'react';
+
 import { View, Text } from 'react-native';
 import { HStack, Pressable, Icon } from '@gluestack-ui/themed';
 import { Menu } from 'lucide-react-native';
-
+import { Image } from "react-native";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 type HeaderProps = {
   onMenuPress: () => void;
 };
 
+
 export default function Header({ onMenuPress }: HeaderProps) {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const router = useRouter(); 
   return (
     <HStack
       style={{
@@ -21,7 +26,18 @@ export default function Header({ onMenuPress }: HeaderProps) {
         borderBottomColor: '#e5e5e5',
       }}
     >
-      <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Ticket App</Text>
+      <Pressable
+  onPress={() => {
+    setIsDrawerOpen(false);
+    router.push("/home");
+  }}
+>
+  <Image
+    source={require("@/assets/images/Frame.png")}
+    style={{ width: 80, height: 28, resizeMode: "contain" }}
+  />
+</Pressable>
+
 
       <Pressable onPress={onMenuPress}>
         <Icon as={Menu} style={{ width: 24, height: 24 }} />

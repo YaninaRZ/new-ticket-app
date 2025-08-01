@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { View, StyleSheet, Text, Pressable, TouchableOpacity } from "react-native";
 import { useRouter, usePathname  } from "expo-router";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Image } from "react-native";
 
 
 export default function RootLayout() {
@@ -39,12 +40,16 @@ export default function RootLayout() {
             <DrawerHeader style={styles.drawerHeader}>
             <Pressable
                 onPress={() => {
-                  setIsDrawerOpen(false); 
-                  router.push("/");      
+                  setIsDrawerOpen(false);
+                  router.push("/home");
                 }}
               >
-                <Text style={styles.drawerTitle}>Ticket App</Text>
-            </Pressable>
+                <Image
+                  source={require("@/assets/images/Frame.png")}
+                  style={{ width: 80, height: 28, resizeMode: "contain" }}
+                />
+              </Pressable>
+
 
 
               <DrawerCloseButton onPress={() => setIsDrawerOpen(false)}>
@@ -56,14 +61,14 @@ export default function RootLayout() {
   <View style={styles.navContainer}>
     {/* Tickets */}
     <Pressable
-      style={[styles.navItem, pathname === "/" && styles.navItemActive]}
+      style={[styles.navItem, pathname === "/home" && styles.navItemActive]}
       onPress={() => {
         setIsDrawerOpen(false);
-        router.push("/");
+        router.push("/home");
       }}
     >
-      <Text style={[styles.navIcon, pathname === "/" && styles.navIconActive]}>⚡</Text>
-      <Text style={[styles.navText, pathname === "/" && styles.navTextActive]}>Tickets</Text>
+      <Text style={[styles.navIcon, pathname === "/home" && styles.navIconActive]}>⚡</Text>
+      <Text style={[styles.navText, pathname === "/home" && styles.navTextActive]}>Tickets</Text>
     </Pressable>
 
     {/* Profil */}

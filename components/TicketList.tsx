@@ -17,6 +17,8 @@ type TicketListProps = {
   onPress?: (ticket: Ticket) => void; // ✅ Passe tout l'objet
 };
 
+
+
 export default function TicketList({ data, onDelete, onPress }: TicketListProps) {
   return (
     <FlatList

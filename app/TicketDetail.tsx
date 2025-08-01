@@ -17,8 +17,12 @@ import {
 } from "@gluestack-ui/themed";
 import { Paperclip } from "lucide-react-native";
 import { View } from "react-native";
+import { Modal } from "react-native";
+
 
 export default function TicketDetail() {
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [isClosed, setIsClosed] = useState(false);
   const router = useRouter();
   const { id, title, author, date, priority } = useLocalSearchParams<{
     id?: string;
@@ -50,6 +54,16 @@ export default function TicketDetail() {
     setCommentInput("");
   };
 
+  const [assignModalVisible, setAssignModalVisible] = useState(false);
+const [assignedUser, setAssignedUser] = useState({ name: "Alice Granger", initials: "AG" });
+
+const users = [
+  { id: "1", name: "Alice Granger", initials: "AG" },
+  { id: "2", name: "Bob Martin", initials: "BM" },
+  { id: "3", name: "Charlie Dupond", initials: "CD" },
+];
+
+
   return (
     <Box style={{ backgroundColor: "#fff", flex: 1, padding: 16 }}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -62,10 +76,33 @@ export default function TicketDetail() {
 
           <Text style={{ fontSize: 12, color: "#6B7280" }}>Priorité</Text>
         </HStack>
+        <View
+  style={{
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    gap: 8,
+  }}
+>
+  <Text style={{ fontSize: 20, fontWeight: "700", flex: 1 }}>
+    {title || `Titre du ticket N°${id}`}
+  </Text>
 
-        <Text style={{ fontSize: 22, fontWeight: "700", marginBottom: 16 }}>
-          {title || `Titre du ticket N°${id}`}
-        </Text>
+  <Pressable
+    onPress={() => setIsClosed((prev) => !prev)}
+    style={{
+      backgroundColor: isClosed ? "#dc2626" : "#16a34a", 
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: 6,
+    }}
+  >
+    <Text style={{ color: "#fff", fontWeight: "600", fontSize: 12 }}>
+      {isClosed ? "Ticket fermé" : "Ticket ouvert"}
+    </Text>
+  </Pressable>
+</View>
 
         {/* Infos */}
         <View style={{ marginBottom: 20 }}>
@@ -81,6 +118,50 @@ export default function TicketDetail() {
           Commodo in viverra nunc, ullamcorper ut. Non, amet, aliquet
           scelerisque nullam sagittis, pulvinar.
         </Text>
+
+        {/* Assignation */}
+        <View
+  style={{
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  }}
+>
+  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <Text style={{ fontSize: 16, color: "#111827" }}>Assigné à</Text>
+    <View
+      style={{
+        backgroundColor: "#fbbf24",
+        borderRadius: 9999,
+        width: 32,
+        height: 32,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Text style={{ color: "#fff", fontWeight: "600" }}>
+        {assignedUser.initials}
+      </Text>
+    </View>
+  </View>
+
+  <Pressable
+    onPress={() => setAssignModalVisible(true)}
+    style={{
+      backgroundColor: "#3B82F6",
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+    }}
+  >
+    <Text style={{ fontSize: 14, color: "#fff", fontWeight: "600" }}>
+      Gérer l’assignement
+    </Text>
+  </Pressable>
+</View>
+
+
 
         {/* Pièces jointes */}
         <Text style={{ fontWeight: "600", marginBottom: 8 }}>📎 Pièces jointes</Text>
@@ -177,21 +258,163 @@ export default function TicketDetail() {
 
   {/* Bouton Supprimer */}
   <Pressable
-    onPress={() => console.log("Suppression du ticket")}
-    style={{
-      flex: 1,
-      backgroundColor: "#dc2626",
-      paddingVertical: 12,
-      borderRadius: 8,
-      alignItems: "center",
-    }}
-  >
-    <Text style={{ color: "#fff", fontWeight: "600" }}>🗑️ Supprimer</Text>
-  </Pressable>
+  onPress={() => setDeleteModalVisible(true)}
+  style={{
+    flex: 1,
+    backgroundColor: "#dc2626",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  }}
+>
+  <Text style={{ color: "#fff", fontWeight: "600" }}>🗑️ Supprimer</Text>
+</Pressable>
+
 </View>
 
 
       </ScrollView>
+      <Modal
+  transparent
+  visible={deleteModalVisible}
+  animationType="fade"
+  onRequestClose={() => setDeleteModalVisible(false)}
+>
+  <Pressable
+    onPress={() => setDeleteModalVisible(false)}
+    style={{
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 24,
+    }}
+  >
+    <Pressable
+      onPress={() => {}}
+      style={{
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 20,
+        width: "100%",
+        maxWidth: 400,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+      }}
+    >
+      <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 20 }}>
+        Êtes-vous sûr de vouloir supprimer ce ticket ?
+      </Text>
+
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <Pressable
+          onPress={() => setDeleteModalVisible(false)}
+          style={{
+            flex: 1,
+            backgroundColor: "#E5E7EB",
+            paddingVertical: 10,
+            borderRadius: 8,
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ fontWeight: "600", color: "#111827" }}>Annuler</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => {
+            setDeleteModalVisible(false);
+            console.log("Ticket supprimé !");
+            // ajoute ici ta logique réelle de suppression (API, état global, etc.)
+          }}
+          style={{
+            flex: 1,
+            backgroundColor: "#dc2626",
+            paddingVertical: 10,
+            borderRadius: 8,
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ fontWeight: "600", color: "#fff" }}>Supprimer</Text>
+        </Pressable>
+      </View>
+    </Pressable>
+  </Pressable>
+</Modal>
+<Modal
+  transparent
+  visible={assignModalVisible}
+  animationType="fade"
+  onRequestClose={() => setAssignModalVisible(false)}
+>
+  <Pressable
+    onPress={() => setAssignModalVisible(false)}
+    style={{
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 24,
+    }}
+  >
+    <Pressable
+      onPress={() => {}}
+      style={{
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 20,
+        width: "100%",
+        maxWidth: 400,
+      }}
+    >
+      <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 16 }}>
+        Sélectionner un utilisateur
+      </Text>
+
+      {users.map((user) => (
+        <Pressable
+          key={user.id}
+          onPress={() => {
+            setAssignedUser(user);
+            setAssignModalVisible(false);
+          }}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingVertical: 10,
+            borderBottomColor: "#E5E7EB",
+            borderBottomWidth: 1,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#facc15",
+              borderRadius: 9999,
+              width: 32,
+              height: 32,
+              justifyContent: "center",
+              alignItems: "center",
+              marginRight: 12,
+            }}
+          >
+            <Text style={{ color: "#fff", fontWeight: "600" }}>{user.initials}</Text>
+          </View>
+          <Text style={{ fontSize: 16, color: "#111827" }}>{user.name}</Text>
+        </Pressable>
+      ))}
+    </Pressable>
+  </Pressable>
+</Modal>
+
     </Box>
   );
 }
