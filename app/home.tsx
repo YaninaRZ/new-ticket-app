@@ -92,7 +92,7 @@ export default function Index() {
       <Text style={styles.ticketMeta}>Auteur : {item.author}</Text>
       <Text style={styles.ticketMeta}>Date : {item.date}</Text>
       <Text style={[styles.ticketPriority, styles[`priority_${item.priority}`]]}>
-        Priorit\u00e9 : {item.priority}
+        Priorité : {item.priority}
       </Text>
     </Pressable>
   );
