@@ -2,14 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
-  Modal,
-  TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  Keyboard,
-  TouchableWithoutFeedback,
-  Image,
   FlatList,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
@@ -31,64 +24,61 @@ import { ChevronDownIcon } from "@/components/ui/icon";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { PlusIcon } from "lucide-react-native";
-import {
-  RadioGroup,
-  Radio,
-  RadioIcon,
-  RadioIndicator,
-  RadioLabel,
-} from "@/components/ui/radio";
-import { useRouter } from "expo-router";
 import axios from "axios";
+import { useRouter } from "expo-router";
+import CreateTicketModal from "@/components/CreateTicketModal";
+
+// Define the ticket type
+interface Ticket {
+  id: string;
+  title: string;
+  author: string;
+  date: string;
+  priority: string;
+}
 
 export default function Index() {
   const router = useRouter();
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [priority, setPriority] = useState("medium");
-  const [successModalVisible, setSuccessModalVisible] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
   const [isEntrepriseActive, setIsEntrepriseActive] = useState(false);
-  const [ticketsData, setTicketsData] = useState([]);
+  const [ticketsData, setTicketsData] = useState<Ticket[]>([]);
 
-  const handleFilePick = async () => {
-    const result = await DocumentPicker.getDocumentAsync({ type: "*/*" });
-    if (result.assets && result.assets.length > 0) {
-      setSelectedFile(result.assets[0]);
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU0MzgxNjMxLCJpYXQiOjE3NTQyOTUyMzF9.pSN-hJudJEnWkoMCl10OwMYuUpiwEvYGTwqMFK2vLak";
+
+  const fetchTickets = async () => {
+    try {
+      const response = await axios.get(
+        "https://ticketing.development.atelier.ovh/api/mobile/tickets",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      console.log("\ud83d\udcc5 Tickets re\u00e7us du backend :", response.data.tickets);
+
+      const formatted: Ticket[] = response.data.tickets.map((ticket) => ({
+        id: ticket.id,
+        title: ticket.title,
+        author: ticket.author || "Inconnu",
+        date: new Date(ticket.created).toLocaleDateString(),
+        priority: ticket.priority,
+      }));
+
+      setTicketsData(formatted);
+    } catch (error) {
+      console.error("\u274c Erreur r\u00e9cup\u00e9ration des tickets :", error);
     }
   };
 
   useEffect(() => {
-    const fetchTickets = async () => {
-      try {
-        const response = await axios.get(
-          "https://ticketing.development.atelier.ovh/api/mobile/tickets",
-          {
-            headers: {
-              Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU0MTQ0MjExLCJpYXQiOjE3NTQwNTc4MTF9.OU1m2m8QD391SPBjiBsk51elo0hrEqfi8tVrfJ5_heU"}`,
-              Accept: "application/json",
-            },
-          }
-        );
-
-        const formatted = response.data.tickets.map((ticket) => ({
-          id: ticket.id,
-          title: ticket.title,
-          author: ticket.author || "Inconnu",
-          date: new Date(ticket.created).toLocaleDateString(),
-          priority: ticket.priority,
-        }));
-
-        setTicketsData(formatted);
-      } catch (error) {
-        console.error("❌ Erreur récupération des tickets :", error);
-      }
-    };
-
     fetchTickets();
   }, []);
 
-  const renderTicket = ({ item }) => (
+  const renderTicket = ({ item }: { item: Ticket }) => (
     <Pressable
       style={styles.ticketCard}
       onPress={() =>
@@ -102,14 +92,13 @@ export default function Index() {
       <Text style={styles.ticketMeta}>Auteur : {item.author}</Text>
       <Text style={styles.ticketMeta}>Date : {item.date}</Text>
       <Text style={[styles.ticketPriority, styles[`priority_${item.priority}`]]}>
-        Priorité : {item.priority}
+        Priorit\u00e9 : {item.priority}
       </Text>
     </Pressable>
   );
 
   return (
     <View style={styles.container}>
-      {/* Filtres UI */}
       <View style={styles.filters}>
         <View style={{ flex: 1 }}>
           <Input size="md" variant="outline">
@@ -120,7 +109,7 @@ export default function Index() {
         <View style={{ flex: 1 }}>
           <Select>
             <SelectTrigger variant="outline" size="md">
-              <SelectInput placeholder="Sélectionner" />
+              <SelectInput placeholder="S\u00e9lectionner" />
               <SelectIcon as={ChevronDownIcon} style={{ marginLeft: 8 }} />
             </SelectTrigger>
             <SelectPortal>
@@ -151,18 +140,32 @@ export default function Index() {
         </TouchableOpacity>
       </View>
 
-      {/* Bouton Créer un ticket */}
       <View style={styles.createButtonWrapper}>
         <Pressable style={styles.createButton} onPress={() => setModalVisible(true)}>
           <PlusIcon size={16} color="#fff" />
-          <Text style={styles.createButtonText}>Créer un ticket</Text>
+          <Text style={styles.createButtonText}>Cr\u00e9er un ticket</Text>
         </Pressable>
       </View>
 
-      {/* Statistiques */}
+      <CreateTicketModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSuccess={(newTicket) => {
+          setModalVisible(false);
+          const formattedTicket: Ticket = {
+            id: newTicket.id,
+            title: newTicket.title,
+            author: newTicket.author || "Inconnu",
+            date: new Date(newTicket.created).toLocaleDateString(),
+            priority: newTicket.priority,
+          };
+          setTicketsData((prev) => [formattedTicket, ...prev]);
+        }}
+      />
+
       <View style={styles.statsRow}>
         <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Tickets fermés</Text>
+          <Text style={styles.statLabel}>Tickets ferm\u00e9s</Text>
           <Text style={styles.statValue}>30</Text>
         </View>
         <View style={styles.statBox}>
@@ -171,7 +174,6 @@ export default function Index() {
         </View>
       </View>
 
-      {/* Liste des tickets */}
       <FlatList
         data={ticketsData}
         keyExtractor={(item) => item.id}
