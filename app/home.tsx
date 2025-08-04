@@ -143,7 +143,7 @@ export default function Index() {
       <View style={styles.createButtonWrapper}>
         <Pressable style={styles.createButton} onPress={() => setModalVisible(true)}>
           <PlusIcon size={16} color="#fff" />
-          <Text style={styles.createButtonText}>Cr\u00e9er un ticket</Text>
+          <Text style={styles.createButtonText}>Créer un ticket</Text>
         </Pressable>
       </View>
 
@@ -165,7 +165,7 @@ export default function Index() {
 
       <View style={styles.statsRow}>
         <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Tickets ferm\u00e9s</Text>
+          <Text style={styles.statLabel}>Tickets fermés</Text>
           <Text style={styles.statValue}>30</Text>
         </View>
         <View style={styles.statBox}>
