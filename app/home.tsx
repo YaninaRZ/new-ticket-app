@@ -48,7 +48,9 @@ export default function Index() {
     sortBy: "",
     sortOrder: "",
   });
-
+  const [closedCount, setClosedCount] = useState(0);
+  const [openedCount, setOpenedCount] = useState(0);
+  
   const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MjAxMjYwLCJpYXQiOjE3NTYxMTQ4NjB9.FkP9hYalt72u2bXOb3wQa3ATQ1L2dqsCdWfpRxR1ZEU";
 
   const fetchTickets = async () => {
@@ -83,6 +85,11 @@ export default function Index() {
       }));
 
       setTicketsData(formatted);
+      const closed = formatted.filter((ticket) => ticket.status === "closed").length;
+const opened = formatted.filter((ticket) => ticket.status === "opened").length;
+
+setClosedCount(closed);
+setOpenedCount(opened);
     } catch (error) {
       console.error("❌ Erreur récupération des tickets :", error);
     }
@@ -226,16 +233,17 @@ export default function Index() {
         }}
       />
 
-      <View style={styles.statsRow}>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Tickets fermés</Text>
-          <Text style={styles.statValue}>30</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Tickets en attente</Text>
-          <Text style={styles.statValue}>30</Text>
-        </View>
-      </View>
+<View style={styles.statsRow}>
+  <View style={styles.statBox}>
+    <Text style={styles.statLabel}>Tickets fermés</Text>
+    <Text style={styles.statValue}>{closedCount}</Text>
+  </View>
+  <View style={styles.statBox}>
+    <Text style={styles.statLabel}>Tickets ouverts</Text>
+    <Text style={styles.statValue}>{openedCount}</Text>
+  </View>
+</View>
+
 
       <FlatList
         data={ticketsData}
