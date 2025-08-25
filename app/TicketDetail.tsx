@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect} from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   Box,
@@ -58,13 +58,10 @@ export default function TicketDetail() {
   };
 
   const [assignModalVisible, setAssignModalVisible] = useState(false);
-const [assignedUser, setAssignedUser] = useState({ name: "Alice Granger", initials: "AG" });
+  const [assignedUser, setAssignedUser] = useState<{ name: string; initials: string } | null>(null);
 
-const users = [
-  { id: "1", name: "Alice Granger", initials: "AG" },
-  { id: "2", name: "Bob Martin", initials: "BM" },
-  { id: "3", name: "Charlie Dupond", initials: "CD" },
-];
+
+
 const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MTk0Mzc0LCJpYXQiOjE3NTYxMDc5NzR9.jI88yJp5N0hshsXB9kLr90OJmnSta5_K7OKZODS8eWg"; 
 
 const toggleTicketStatus = async () => {
@@ -91,8 +88,116 @@ const toggleTicketStatus = async () => {
     console.error("❌ Erreur réseau :", error);
   }
 };
+const assignTicket = async (userId: string) => {
+  try {
+    const response = await fetch(
+      `https://ticketing.development.atelier.ovh/api/mobile/tickets/${id}/assign`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      }
+    );
+
+    if (response.ok) {
+      console.log("✅ Ticket assigné à l'utilisateur");
+
+      // Met à jour l'utilisateur assigné localement
+      const user = users.find((u) => u.id === userId);
+      if (user) setAssignedUser(user);
+
+    } else {
+      const error = await response.json();
+      console.error("❌ Erreur assignation :", error);
+    }
+  } catch (err) {
+    console.error("❌ Erreur réseau :", err);
+  }
+};
 
 
+const [users, setUsers] = useState<{ id: string; name: string; initials: string }[]>([]);
+
+useEffect(() => {
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(
+        "https://ticketing.development.atelier.ovh/api/mobile/users",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("✅ Données récupérées :", data);
+        
+
+        // Exemple d'adaptation si `data` est un tableau de users avec `firstName` et `lastName`
+        const formatted = data.users.map((user: any) => ({
+          id: user.id,
+          name: user.username,
+          initials: `${user.username[0] ?? ""}${user.username[1] ?? ""}`,
+        }));
+        
+
+        setUsers(formatted);
+      } else {
+        console.error("❌ Erreur récupération users :", await response.json());
+      }
+    } catch (err) {
+      console.error("❌ Erreur réseau lors du fetch des users :", err);
+    }
+  };
+
+  fetchUsers();
+}, []);
+
+useEffect(() => {
+  const fetchTicketDetails = async () => {
+    try {
+      const response = await fetch(
+        `https://ticketing.development.atelier.ovh/api/mobile/tickets/${id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("✅ Ticket récupéré :", data);
+
+        if (data.assignedUser) {
+          const initials = `${data.assignedUser.username[0] ?? ""}${data.assignedUser.username[1] ?? ""}`;
+          setAssignedUser({
+            name: data.assignedUser.username,
+            initials,
+          });
+        } else {
+          setAssignedUser(null);
+        }
+      } else {
+        console.error("❌ Erreur ticket détails :", await response.json());
+      }
+    } catch (error) {
+      console.error("❌ Erreur réseau ticket :", error);
+    }
+  };
+
+  fetchTicketDetails();
+}, []);
 
   return (
     <Box style={{ backgroundColor: "#fff", flex: 1, padding: 16 }}>
@@ -172,8 +277,9 @@ const toggleTicketStatus = async () => {
       }}
     >
       <Text style={{ color: "#fff", fontWeight: "600" }}>
-        {assignedUser.initials}
-      </Text>
+  {assignedUser ? assignedUser.initials : "?"}
+</Text>
+
     </View>
   </View>
 
@@ -428,11 +534,13 @@ const toggleTicketStatus = async () => {
         Sélectionner un utilisateur
       </Text>
 
+      <ScrollView style={{ maxHeight: 300 }}>
       {users.map((user) => (
         <Pressable
           key={user.id}
           onPress={() => {
             setAssignedUser(user);
+            assignTicket(user.id);
             setAssignModalVisible(false);
           }}
           style={{
@@ -459,6 +567,7 @@ const toggleTicketStatus = async () => {
           <Text style={{ fontSize: 16, color: "#111827" }}>{user.name}</Text>
         </Pressable>
       ))}
+      </ScrollView>
     </Pressable>
   </Pressable>
 </Modal>
