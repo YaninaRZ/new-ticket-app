@@ -1,26 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
+  ScrollView,
   FlatList,
 } from "react-native";
-import * as DocumentPicker from "expo-document-picker";
-import "react-native-reanimated";
 import { Input, InputField } from "@/components/ui/input";
 import {
   Select,
   SelectTrigger,
   SelectInput,
-  SelectIcon,
   SelectPortal,
   SelectBackdrop,
   SelectContent,
-  SelectDragIndicator,
-  SelectDragIndicatorWrapper,
   SelectItem,
 } from "@/components/ui/select";
-import { ChevronDownIcon } from "@/components/ui/icon";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { PlusIcon } from "lucide-react-native";
@@ -28,9 +22,8 @@ import axios from "axios";
 import { useRouter } from "expo-router";
 import CreateTicketModal from "@/components/CreateTicketModal";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback } from "react";
 
-// Define the ticket type
+
 interface Ticket {
   id: string;
   title: string;
@@ -43,15 +36,34 @@ export default function Index() {
   const router = useRouter();
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [isEntrepriseActive, setIsEntrepriseActive] = useState(false);
   const [ticketsData, setTicketsData] = useState<Ticket[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [filters, setFilters] = useState({
+    status: "",
+    search: "",
+    company: "",
+    sortBy: "",
+    sortOrder: "",
+  });
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MTk0Mzc0LCJpYXQiOjE3NTYxMDc5NzR9.jI88yJp5N0hshsXB9kLr90OJmnSta5_K7OKZODS8eWg";
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MjAxMjYwLCJpYXQiOjE3NTYxMTQ4NjB9.FkP9hYalt72u2bXOb3wQa3ATQ1L2dqsCdWfpRxR1ZEU";
 
   const fetchTickets = async () => {
     try {
+      const queryParams = new URLSearchParams({
+        page: "1",
+        limit: "20",
+        ...(filters.status && { status: filters.status }),
+        ...(filters.search && { search: filters.search }),
+        ...(filters.company && { company: filters.company }),
+        ...(filters.sortBy && { sortBy: filters.sortBy }),
+        ...(filters.sortOrder && { sortOrder: filters.sortOrder }),
+      });
+
       const response = await axios.get(
-        "https://ticketing.development.atelier.ovh/api/mobile/tickets",
+        `https://ticketing.development.atelier.ovh/api/mobile/tickets?${queryParams}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -59,8 +71,6 @@ export default function Index() {
           },
         }
       );
-
-      console.log("\ud83d\udcc5 Tickets re\u00e7us du backend :", response.data.tickets);
 
       const formatted: Ticket[] = response.data.tickets.map((ticket) => ({
         id: ticket.id,
@@ -72,7 +82,7 @@ export default function Index() {
 
       setTicketsData(formatted);
     } catch (error) {
-      console.error("\u274c Erreur r\u00e9cup\u00e9ration des tickets :", error);
+      console.error("❌ Erreur récupération des tickets :", error);
     }
   };
 
@@ -82,19 +92,16 @@ export default function Index() {
 
   useFocusEffect(
     useCallback(() => {
+      setPage(1);
+      setHasMore(true);
       fetchTickets();
     }, [])
   );
-  
+
   const renderTicket = ({ item }: { item: Ticket }) => (
     <Pressable
       style={styles.ticketCard}
-      onPress={() =>
-        router.push({
-          pathname: "/TicketDetail",
-          params: item,
-        })
-      }
+      onPress={() => router.push({ pathname: "/TicketDetail", params: item })}
     >
       <Text style={styles.ticketTitle}>{item.title}</Text>
       <Text style={styles.ticketMeta}>Auteur : {item.author}</Text>
@@ -107,46 +114,92 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.filters}>
-        <View style={{ flex: 1 }}>
-          <Input size="md" variant="outline">
-            <InputField placeholder="Rechercher..." />
-          </Input>
-        </View>
+  <View style={{ marginBottom: 16 }}>
+  <ScrollView
+    horizontal
+    showsHorizontalScrollIndicator={false}
+    contentContainerStyle={styles.filtersScroll}
+  >
 
-        <View style={{ flex: 1 }}>
-          <Select>
-            <SelectTrigger variant="outline" size="md">
-              <SelectInput placeholder="S\u00e9lectionner" />
-              <SelectIcon as={ChevronDownIcon} style={{ marginLeft: 8 }} />
-            </SelectTrigger>
-            <SelectPortal>
-              <SelectBackdrop />
-              <SelectContent>
-                <SelectDragIndicatorWrapper>
-                  <SelectDragIndicator />
-                </SelectDragIndicatorWrapper>
-                <SelectItem label="UX Research" value="ux" />
-                <SelectItem label="Web Development" value="web" />
-                <SelectItem label="Cross Platform Development Process" value="cross" />
-                <SelectItem label="UI Designing" value="ui" isDisabled />
-                <SelectItem label="Backend Development" value="backend" />
-              </SelectContent>
-            </SelectPortal>
-          </Select>
-        </View>
 
-        <TouchableOpacity onPress={() => setIsEntrepriseActive(!isEntrepriseActive)}>
-          <Text
-            style={[
-              styles.filterText,
-              isEntrepriseActive && styles.filterTextActive,
-            ]}
-          >
-            Entreprise
-          </Text>
-        </TouchableOpacity>
-      </View>
+    <View style={styles.filterItem}>
+      <Select
+        selectedValue={filters.status}
+        onValueChange={(value) => {
+          setFilters((prev) => ({ ...prev, status: value }));
+          fetchTickets();
+        }}
+      >
+        <SelectTrigger>
+          <SelectInput placeholder="Statut" />
+        </SelectTrigger>
+        <SelectPortal>
+          <SelectBackdrop />
+          <SelectContent>
+            <SelectItem label="Tous" value="" />
+            <SelectItem label="Ouverts" value="opened" />
+            <SelectItem label="Fermés" value="closed" />
+          </SelectContent>
+        </SelectPortal>
+      </Select>
+    </View>
+
+    <View style={styles.filterItem}>
+      <Input size="md" variant="outline">
+        <InputField
+          placeholder="Rechercher par titre..."
+          onChangeText={(text) => {
+            setFilters((prev) => ({ ...prev, search: text }));
+            fetchTickets();
+          }}
+        />
+      </Input>
+    </View>
+
+    <View style={styles.filterItem}>
+      <Select
+        selectedValue={filters.sortBy}
+        onValueChange={(value) => {
+          setFilters((prev) => ({ ...prev, sortBy: value }));
+          fetchTickets();
+        }}
+      >
+        <SelectTrigger>
+          <SelectInput placeholder="Trier par..." />
+        </SelectTrigger>
+        <SelectPortal>
+          <SelectBackdrop />
+          <SelectContent>
+            <SelectItem label="Création" value="created" />
+            <SelectItem label="Priorité" value="priority" />
+            <SelectItem label="Titre" value="title" />
+          </SelectContent>
+        </SelectPortal>
+      </Select>
+    </View>
+
+    <View style={styles.filterItem}>
+      <Select
+        selectedValue={filters.sortOrder}
+        onValueChange={(value) => {
+          setFilters((prev) => ({ ...prev, sortOrder: value }));
+          fetchTickets();
+        }}
+      >
+        <SelectTrigger>
+          <SelectInput placeholder="Ordre de tri" />
+        </SelectTrigger>
+        <SelectPortal>
+          <SelectBackdrop />
+          <SelectContent>
+            <SelectItem label="Ascendant" value="ASC" />
+            <SelectItem label="Descendant" value="DESC" />
+          </SelectContent>
+        </SelectPortal>
+      </Select>
+    </View>
+  </ScrollView>
+</View>
 
       <View style={styles.createButtonWrapper}>
         <Pressable style={styles.createButton} onPress={() => setModalVisible(true)}>
@@ -187,6 +240,9 @@ export default function Index() {
         keyExtractor={(item) => item.id}
         renderItem={renderTicket}
         style={{ marginTop: 20 }}
+        onEndReached={() => fetchTickets(page)}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={isLoading ? <Text>Chargement...</Text> : null}
       />
     </View>
   );
@@ -194,7 +250,9 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "white" },
-  filters: { flexDirection: "row", alignItems: "center", gap: 12 },
+  filtersScroll: { paddingVertical: 8 },
+  filters: { flexDirection: "row", alignItems: "center" },
+  filterItem: { marginRight: 16, minWidth: 150 },
   createButtonWrapper: { marginTop: 16, alignItems: "flex-end" },
   createButton: {
     backgroundColor: "#000",
@@ -218,18 +276,6 @@ const styles = StyleSheet.create({
   },
   statLabel: { color: "#6B7280", fontSize: 16, marginBottom: 8 },
   statValue: { fontSize: 22, fontWeight: "700", color: "#000" },
-  filterText: {
-    color: "#6B7280",
-    fontSize: 14,
-    fontWeight: "500",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    marginLeft: 8,
-  },
-  filterTextActive: { backgroundColor: "#E5E7EB", color: "#111827" },
   ticketCard: {
     borderWidth: 1,
     borderColor: "#E5E7EB",
@@ -244,4 +290,6 @@ const styles = StyleSheet.create({
   priority_medium: { color: "orange" },
   priority_high: { color: "red" },
   priority_urgent: { color: "purple" },
+
+
 });

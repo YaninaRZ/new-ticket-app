@@ -21,6 +21,8 @@ export default function CreateTicketModal({ visible, onClose, onSuccess }) {
   const [priority, setPriority] = useState("medium");
   const [projectId, setProjectId] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [projectName, setProjectName] = useState("");
+
 
   const handleFilePick = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: "*/*" });
@@ -36,7 +38,8 @@ export default function CreateTicketModal({ visible, onClose, onSuccess }) {
       formData.append("description", description);
       formData.append("priority", priority);
       formData.append("project", projectId); // ✅ Champ correct
-  
+      formData.append("project_name", projectName);
+
       if (selectedFile) {
         formData.append("files", {
           uri: selectedFile.uri,
@@ -98,6 +101,10 @@ export default function CreateTicketModal({ visible, onClose, onSuccess }) {
           <Input>
             <InputField placeholder="ID Projet" value={projectId} onChangeText={setProjectId} />
           </Input>
+
+          <Input>
+  <InputField placeholder="Nom du projet" value={projectName} onChangeText={setProjectName} />
+</Input>
 
           <Select selectedValue={priority} onValueChange={setPriority}>
             <SelectTrigger>
