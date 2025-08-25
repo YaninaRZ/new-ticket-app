@@ -62,7 +62,7 @@ const users = [
   { id: "2", name: "Bob Martin", initials: "BM" },
   { id: "3", name: "Charlie Dupond", initials: "CD" },
 ];
-
+const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MTk0Mzc0LCJpYXQiOjE3NTYxMDc5NzR9.jI88yJp5N0hshsXB9kLr90OJmnSta5_K7OKZODS8eWg"; 
 
   return (
     <Box style={{ backgroundColor: "#fff", flex: 1, padding: 16 }}>
@@ -298,12 +298,6 @@ const users = [
         padding: 20,
         width: "100%",
         maxWidth: 400,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
       }}
     >
       <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 20 }}>
@@ -317,6 +311,7 @@ const users = [
           gap: 12,
         }}
       >
+        {/* Annuler */}
         <Pressable
           onPress={() => setDeleteModalVisible(false)}
           style={{
@@ -330,11 +325,32 @@ const users = [
           <Text style={{ fontWeight: "600", color: "#111827" }}>Annuler</Text>
         </Pressable>
 
+        {/* Supprimer */}
         <Pressable
-          onPress={() => {
+          onPress={async () => {
             setDeleteModalVisible(false);
-            console.log("Ticket supprimé !");
-            // ajoute ici ta logique réelle de suppression (API, état global, etc.)
+            try {
+              const response = await fetch(
+                `https://ticketing.development.atelier.ovh/api/mobile/tickets/${id}`,
+                {
+                  method: "DELETE",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json",
+                  },
+                }
+              );
+
+              if (response.ok) {
+                console.log("✅ Ticket supprimé");
+                router.replace("/home");
+              } else {
+                const result = await response.json();
+                console.error("❌ Échec suppression", result);
+              }
+            } catch (error) {
+              console.error("❌ Erreur réseau", error);
+            }
           }}
           style={{
             flex: 1,
@@ -350,6 +366,7 @@ const users = [
     </Pressable>
   </Pressable>
 </Modal>
+
 <Modal
   transparent
   visible={assignModalVisible}

@@ -45,7 +45,7 @@ export default function CreateTicketModal({ visible, onClose, onSuccess }) {
         });
       }
   
-      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU0MzgxNjMxLCJpYXQiOjE3NTQyOTUyMzF9.pSN-hJudJEnWkoMCl10OwMYuUpiwEvYGTwqMFK2vLak";
+      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MTk0Mzc0LCJpYXQiOjE3NTYxMDc5NzR9.jI88yJp5N0hshsXB9kLr90OJmnSta5_K7OKZODS8eWg";
   
       // 🔍 LOG des champs envoyés
       for (let [key, value] of formData.entries()) {

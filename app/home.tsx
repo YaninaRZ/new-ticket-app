@@ -27,6 +27,8 @@ import { PlusIcon } from "lucide-react-native";
 import axios from "axios";
 import { useRouter } from "expo-router";
 import CreateTicketModal from "@/components/CreateTicketModal";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 
 // Define the ticket type
 interface Ticket {
@@ -44,7 +46,7 @@ export default function Index() {
   const [isEntrepriseActive, setIsEntrepriseActive] = useState(false);
   const [ticketsData, setTicketsData] = useState<Ticket[]>([]);
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU0MzgxNjMxLCJpYXQiOjE3NTQyOTUyMzF9.pSN-hJudJEnWkoMCl10OwMYuUpiwEvYGTwqMFK2vLak";
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MTk0Mzc0LCJpYXQiOjE3NTYxMDc5NzR9.jI88yJp5N0hshsXB9kLr90OJmnSta5_K7OKZODS8eWg";
 
   const fetchTickets = async () => {
     try {
@@ -78,6 +80,12 @@ export default function Index() {
     fetchTickets();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchTickets();
+    }, [])
+  );
+  
   const renderTicket = ({ item }: { item: Ticket }) => (
     <Pressable
       style={styles.ticketCard}
