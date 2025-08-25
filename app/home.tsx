@@ -30,6 +30,7 @@ interface Ticket {
   author: string;
   date: string;
   priority: string;
+  status: string;
 }
 
 export default function Index() {
@@ -78,6 +79,7 @@ export default function Index() {
         author: ticket.author || "Inconnu",
         date: new Date(ticket.created).toLocaleDateString(),
         priority: ticket.priority,
+        status: ticket.status,
       }));
 
       setTicketsData(formatted);

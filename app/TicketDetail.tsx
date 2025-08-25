@@ -22,16 +22,19 @@ import { Modal } from "react-native";
 
 export default function TicketDetail() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [isClosed, setIsClosed] = useState(false);
+
+
   const router = useRouter();
-  const { id, title, author, date, priority } = useLocalSearchParams<{
+  const { id, title, author, date, priority, status } = useLocalSearchParams<{
     id?: string;
     title?: string;
     author?: string;
     date?: string;
     priority?: string;
+    status?: "opened" | "closed";
   }>();
-
+  const [isClosed, setIsClosed] = useState(status === "closed");
+  
   const [commentInput, setCommentInput] = useState("");
   const [comments, setComments] = useState([
     { id: "1", author: "Alice", content: "Je regarde ça dès que possible." },
@@ -64,6 +67,33 @@ const users = [
 ];
 const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MTk0Mzc0LCJpYXQiOjE3NTYxMDc5NzR9.jI88yJp5N0hshsXB9kLr90OJmnSta5_K7OKZODS8eWg"; 
 
+const toggleTicketStatus = async () => {
+  try {
+    const response = await fetch(
+      `https://ticketing.development.atelier.ovh/api/mobile/tickets/${id}/status`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }
+    );
+
+    if (response.ok) {
+      console.log("✅ Statut du ticket modifié avec succès");
+      setIsClosed((prev) => !prev); // met à jour le statut localement
+    } else {
+      const result = await response.json();
+      console.error("❌ Erreur lors du changement de statut :", result);
+    }
+  } catch (error) {
+    console.error("❌ Erreur réseau :", error);
+  }
+};
+
+
+
   return (
     <Box style={{ backgroundColor: "#fff", flex: 1, padding: 16 }}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -90,18 +120,19 @@ const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFu
   </Text>
 
   <Pressable
-    onPress={() => setIsClosed((prev) => !prev)}
-    style={{
-      backgroundColor: isClosed ? "#dc2626" : "#16a34a", 
-      paddingVertical: 6,
-      paddingHorizontal: 12,
-      borderRadius: 6,
-    }}
-  >
-    <Text style={{ color: "#fff", fontWeight: "600", fontSize: 12 }}>
-      {isClosed ? "Ticket fermé" : "Ticket ouvert"}
-    </Text>
-  </Pressable>
+  onPress={toggleTicketStatus}
+  style={{
+    backgroundColor: isClosed ? "#dc2626" : "#16a34a",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  }}
+>
+  <Text style={{ color: "#fff", fontWeight: "600", fontSize: 12 }}>
+    {isClosed ? "Ticket fermé" : "Ticket ouvert"}
+  </Text>
+</Pressable>
+
 </View>
 
         {/* Infos */}
