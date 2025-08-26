@@ -97,6 +97,7 @@ export default function TicketDetail() {
   const fetchTicketDetails = async () => {
     try {
       const res = await api.get(`/tickets/${id}`);
+  
       if (res.data.assignedUser) {
         setAssignedUser({
           name: res.data.assignedUser.username,
@@ -106,7 +107,8 @@ export default function TicketDetail() {
           id: res.data.assignedUser.id,
         });
       }
-      // 👉 si ton backend renvoie les commentaires du ticket ici
+  
+      // ✅ Ici on récupère les commentaires du ticket
       if (res.data.comments) {
         setComments(res.data.comments);
       }
@@ -114,32 +116,50 @@ export default function TicketDetail() {
       console.error("❌ Erreur fetch ticket details", err);
     }
   };
+  
 
   // 🔹 Récupérer uniquement les commentaires (si ton backend a une route séparée)
   const fetchComments = async () => {
     try {
-      const res = await api.get(`/tickets/${id}/comments`);
-      setComments(res.data.comments); // adapte si la clé est différente
+      const res = await api.get(`/comments/ticket/${id}`);
+      setComments(res.data.comments); // 👉 adapte selon la clé de ton backend
     } catch (err) {
       console.error("❌ Erreur fetch comments", err);
     }
   };
+  
 
   // 🔹 Ajouter un commentaire
   const addComment = async (content: string) => {
     try {
-      const res = await api.post(`/tickets/${id}/comments`, { content });
-      setComments((prev) => [...prev, res.data]); // res.data = nouveau commentaire
-    } catch (err) {
-      console.error("❌ Erreur ajout commentaire", err);
+      const formData = new FormData();
+      formData.append("ticket_id", id as string);
+      formData.append("content", content);
+  
+      const res = await api.post(`/comments`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+  
+      // 👉 Crée un commentaire affichable même si l’API ne renvoie pas tout
+      const newComment = {
+        id: res.data.id ?? Date.now().toString(), // fallback si pas d'id
+        author: "Moi", // tu peux remplacer par user connecté
+        content,
+      };
+  
+      setComments((prev) => [...prev, newComment]);
+    } catch (err: any) {
+      console.error("❌ Erreur ajout commentaire", err.response?.data || err);
     }
   };
+  
+  
 
   // ✅ useEffect
   useEffect(() => {
     fetchUsers();
     fetchTicketDetails();
-    fetchComments(); // 👉 charge les commentaires quand la page s’ouvre
+    fetchComments();// 👉 charge les commentaires quand la page s’ouvre
   }, []);
 
   return (

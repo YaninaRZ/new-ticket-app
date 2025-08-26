@@ -22,23 +22,30 @@ export default function TicketComments({ comments, onAdd }: Props) {
 
       {/* Liste des commentaires */}
       <View style={{ gap: 12, marginBottom: 20 }}>
-        {comments.map((c) => (
+        {comments.map((c, index) => (
           <Box
-            key={c.id}
+            key={c.id ?? `comment-${index}`}
             style={{
-              backgroundColor: "#F3F4F6",
+              backgroundColor: "#F3F4F6", // ✅ fond gris
               padding: 12,
               borderRadius: 8,
             }}
           >
-            <Text style={{ fontWeight: "600" }}>{c.author}</Text>
-            <Text>{c.content}</Text>
+            <Text style={{ fontWeight: "600", marginBottom: 4 }}>{c.author}</Text>
+            <Text style={{ color: "#374151" }}>{c.content}</Text>
           </Box>
         ))}
       </View>
 
       {/* Champ d’ajout */}
-      <Input style={{ borderColor: "#D1D5DB", borderWidth: 1, borderRadius: 8, marginTop: 12 }}>
+      <Input
+        style={{
+          borderColor: "#D1D5DB",
+          borderWidth: 1,
+          borderRadius: 8,
+          marginTop: 12,
+        }}
+      >
         <InputField
           placeholder="Écris ton commentaire ici..."
           value={commentInput}
