@@ -1,27 +1,27 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  FlatList,
-} from "react-native";
+import CreateTicketModal from "@/components/CreateTicketModal";
 import { Input, InputField } from "@/components/ui/input";
+import { Pressable } from "@/components/ui/pressable";
 import {
   Select,
-  SelectTrigger,
-  SelectInput,
-  SelectPortal,
   SelectBackdrop,
   SelectContent,
+  SelectInput,
   SelectItem,
+  SelectPortal,
+  SelectTrigger,
 } from "@/components/ui/select";
-import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
-import { PlusIcon } from "lucide-react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
 import { useRouter } from "expo-router";
-import CreateTicketModal from "@/components/CreateTicketModal";
-import { useFocusEffect } from "@react-navigation/native";
+import { PlusIcon } from "lucide-react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 
 
 interface Ticket {
@@ -51,7 +51,7 @@ export default function Index() {
   const [closedCount, setClosedCount] = useState(0);
   const [openedCount, setOpenedCount] = useState(0);
   
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MjAxMjYwLCJpYXQiOjE3NTYxMTQ4NjB9.FkP9hYalt72u2bXOb3wQa3ATQ1L2dqsCdWfpRxR1ZEU";
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2Mjk3NzczLCJpYXQiOjE3NTYyMTEzNzN9.PYH5iWuPIMoZEd_F1uEbaVKpf8BB41osYPBKAvTXKwk";
 
   const fetchTickets = async () => {
     try {
