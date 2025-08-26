@@ -1,25 +1,24 @@
-import React, { useEffect } from "react";
 import {
-  GluestackUIProvider,
+  Button,
+  ButtonText,
   Center,
-  VStack,
+  GluestackUIProvider,
   Heading,
   Text,
-  Button,
-  ButtonText
+  VStack
 } from "@gluestack-ui/themed";
-import * as WebBrowser from "expo-web-browser";
+import axios from "axios";
 import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
-import axios from "axios";
+import * as SecureStore from "expo-secure-store"; // 👈 ajout
+import * as WebBrowser from "expo-web-browser";
+import React, { useEffect } from "react";
 
-// Nécessaire pour finaliser l'authentification après redirection
 WebBrowser.maybeCompleteAuthSession();
 
 const App = () => {
   const router = useRouter();
 
-  // Configuration Google Auth
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: "135662705560-dij18ofncp8trfsabc3m4p74b88qlpkg.apps.googleusercontent.com",
     androidClientId: "135662705560-gfl6qm7suem5ji83ntmvdtql501c6kvc.apps.googleusercontent.com",
@@ -45,6 +44,14 @@ const App = () => {
           );
 
           console.log("✅ Backend login success:", backendResponse.data);
+
+          // ✅ Étape 1 : stocker access_token, refresh_token et user
+          const { access_token, refresh_token, user } = backendResponse.data;
+          await SecureStore.setItemAsync("access_token", access_token);
+          await SecureStore.setItemAsync("refresh_token", refresh_token);
+          await SecureStore.setItemAsync("user", JSON.stringify(user));
+
+          // Redirection après login
           router.push("/home");
         } catch (err) {
           console.error("❌ Backend error:", err);

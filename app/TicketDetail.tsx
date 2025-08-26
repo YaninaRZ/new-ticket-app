@@ -12,6 +12,9 @@ import TicketHeader from "@/components/ticket/TicketHeader";
 import TicketInfo from "@/components/ticket/TicketInfo";
 import { Pressable, Text, View } from "react-native";
 
+// ✅ Hook auth
+import { useAuth } from "@/hooks/useAuth";
+
 interface User {
   id: string;
   name: string;
@@ -35,6 +38,8 @@ export default function TicketDetail() {
     status?: "opened" | "closed";
   }>();
 
+  const { user: currentUser } = useAuth(); // 👈 récupère l’utilisateur connecté
+
   // ✅ States
   const [isClosed, setIsClosed] = useState(status === "closed");
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -42,7 +47,7 @@ export default function TicketDetail() {
   const [users, setUsers] = useState<User[]>([]);
   const [assignedUser, setAssignedUser] = useState<User | null>(null);
 
-  const [comments, setComments] = useState<Comment[]>([]); // 👉 plus de valeurs en dur
+  const [comments, setComments] = useState<Comment[]>([]);
 
   const attachments = [
     { id: "1", filename: "capture-erreur.png" },
@@ -97,7 +102,7 @@ export default function TicketDetail() {
   const fetchTicketDetails = async () => {
     try {
       const res = await api.get(`/tickets/${id}`);
-  
+
       if (res.data.assignedUser) {
         setAssignedUser({
           name: res.data.assignedUser.username,
@@ -107,59 +112,52 @@ export default function TicketDetail() {
           id: res.data.assignedUser.id,
         });
       }
-  
-      // ✅ Ici on récupère les commentaires du ticket
-      if (res.data.comments) {
-        setComments(res.data.comments);
-      }
     } catch (err) {
       console.error("❌ Erreur fetch ticket details", err);
     }
   };
-  
 
-  // 🔹 Récupérer uniquement les commentaires (si ton backend a une route séparée)
   const fetchComments = async () => {
     try {
       const res = await api.get(`/comments/ticket/${id}`);
-      setComments(res.data.comments); // 👉 adapte selon la clé de ton backend
-    } catch (err) {
-      console.error("❌ Erreur fetch comments", err);
+      const formatted = res.data.comments.map((c: any) => ({
+        id: c.id,
+        content: c.content,
+        author: c.username, // 👈 affiche bien le username
+      }));
+      setComments(formatted);
+    } catch (err: any) {
+      console.error("❌ Erreur fetch comments", err.response?.data || err);
     }
   };
-  
 
-  // 🔹 Ajouter un commentaire
   const addComment = async (content: string) => {
     try {
       const formData = new FormData();
       formData.append("ticket_id", id as string);
       formData.append("content", content);
-  
+
       const res = await api.post(`/comments`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-  
-      // 👉 Crée un commentaire affichable même si l’API ne renvoie pas tout
+
       const newComment = {
-        id: res.data.id ?? Date.now().toString(), // fallback si pas d'id
-        author: "Moi", // tu peux remplacer par user connecté
+        id: res.data.id ?? Date.now().toString(),
         content,
+        author: res.data.username ?? currentUser?.username ?? "Moi", // 👈 utilise ton vrai username
       };
-  
+
       setComments((prev) => [...prev, newComment]);
     } catch (err: any) {
       console.error("❌ Erreur ajout commentaire", err.response?.data || err);
     }
   };
-  
-  
 
   // ✅ useEffect
   useEffect(() => {
     fetchUsers();
     fetchTicketDetails();
-    fetchComments();// 👉 charge les commentaires quand la page s’ouvre
+    fetchComments();
   }, []);
 
   return (
@@ -183,7 +181,6 @@ export default function TicketDetail() {
 
         <TicketAttachments attachments={attachments} />
 
-        {/* ✅ Ici plus de commentaires en dur */}
         <TicketComments comments={comments} onAdd={addComment} />
       </ScrollView>
 
