@@ -1,28 +1,25 @@
-import React, { useState } from "react";
-import {
-  Modal,
-  View,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  Platform,
-  KeyboardAvoidingView,
-} from "react-native";
-import * as DocumentPicker from "expo-document-picker";
-import { Select, SelectTrigger, SelectInput, SelectPortal, SelectBackdrop, SelectContent, SelectItem } from "@/components/ui/select";
-import { ChevronDownIcon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import axios from "axios";
+import * as DocumentPicker from "expo-document-picker";
+import React, { useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function CreateTicketModal({ visible, onClose, onSuccess }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("medium");
+  const [priorityModalVisible, setPriorityModalVisible] = useState(false);
   const [projectId, setProjectId] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
   const [projectName, setProjectName] = useState("");
-
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const handleFilePick = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: "*/*" });
@@ -30,14 +27,14 @@ export default function CreateTicketModal({ visible, onClose, onSuccess }) {
       setSelectedFile(result.assets[0]);
     }
   };
+
   const handleSubmit = async () => {
     try {
       const formData = new FormData();
-  
       formData.append("title", title);
       formData.append("description", description);
       formData.append("priority", priority);
-      formData.append("project", projectId); // ✅ Champ correct
+      formData.append("project", projectId);
       formData.append("project_name", projectName);
 
       if (selectedFile) {
@@ -47,14 +44,9 @@ export default function CreateTicketModal({ visible, onClose, onSuccess }) {
           type: selectedFile.mimeType || "application/octet-stream",
         });
       }
-  
-      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MTk0Mzc0LCJpYXQiOjE3NTYxMDc5NzR9.jI88yJp5N0hshsXB9kLr90OJmnSta5_K7OKZODS8eWg";
-  
-      // 🔍 LOG des champs envoyés
-      for (let [key, value] of formData.entries()) {
-        console.log(`📤 ${key}: ${value}`);
-      }
-  
+
+      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2MzAyMzY3LCJpYXQiOjE3NTYyMTU5Njd9.L9HibVPvOTZ1zS2PXnZrv1_rwae_qDm9wF3a8m0J3ZQ";
+
       const response = await axios.post(
         "https://ticketing.development.atelier.ovh/api/mobile/tickets",
         formData,
@@ -66,20 +58,14 @@ export default function CreateTicketModal({ visible, onClose, onSuccess }) {
           },
         }
       );
-  
-      console.log("✅ Ticket créé avec succès :", response.data);
-      onSuccess(response.data.ticket); // passe le ticket à Index
 
+      console.log("✅ Ticket créé avec succès :", response.data);
+      onSuccess(response.data.ticket);
       onClose();
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("❌ Erreur création ticket - Réponse serveur :", error.response?.data);
-      } else {
-        console.error("❌ Erreur inconnue :", error);
-      }
+      console.error("❌ Erreur création ticket :", error.response?.data || error);
     }
   };
-  
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -90,37 +76,62 @@ export default function CreateTicketModal({ visible, onClose, onSuccess }) {
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Créer un Ticket</Text>
 
-          <Input>
-            <InputField placeholder="Titre" value={title} onChangeText={setTitle} />
-          </Input>
+          <View style={styles.field}>
+            <Input>
+              <InputField placeholder="Titre" value={title} onChangeText={setTitle} />
+            </Input>
+          </View>
 
-          <Input>
-            <InputField placeholder="Description" value={description} onChangeText={setDescription} />
-          </Input>
+          <View style={styles.field}>
+            <Input>
+              <InputField placeholder="Description" value={description} onChangeText={setDescription} />
+            </Input>
+          </View>
 
-          <Input>
-            <InputField placeholder="ID Projet" value={projectId} onChangeText={setProjectId} />
-          </Input>
+          <View style={styles.field}>
+            <Input>
+              <InputField placeholder="ID Projet" value={projectId} onChangeText={setProjectId} />
+            </Input>
+          </View>
 
-          <Input>
-  <InputField placeholder="Nom du projet" value={projectName} onChangeText={setProjectName} />
-</Input>
+          <View style={styles.field}>
+            <Input>
+              <InputField placeholder="Nom du projet" value={projectName} onChangeText={setProjectName} />
+            </Input>
+          </View>
 
-          <Select selectedValue={priority} onValueChange={setPriority}>
-            <SelectTrigger>
-              <SelectInput placeholder="Priorité" />
-              <ChevronDownIcon />
-            </SelectTrigger>
-            <SelectPortal>
-              <SelectBackdrop />
-              <SelectContent>
-                <SelectItem label="Low" value="low" />
-                <SelectItem label="Medium" value="medium" />
-                <SelectItem label="High" value="high" />
-                <SelectItem label="Urgent" value="urgent" />
-              </SelectContent>
-            </SelectPortal>
-          </Select>
+          {/* Sélecteur custom pour la priorité */}
+          <TouchableOpacity
+            style={styles.prioritySelector}
+            onPress={() => setPriorityModalVisible(true)}
+          >
+            <Text style={styles.priorityText}>Priorité : {priority}</Text>
+          </TouchableOpacity>
+
+          {/* Modal pour afficher la liste des choix */}
+          <Modal
+            transparent
+            visible={priorityModalVisible}
+            animationType="fade"
+            onRequestClose={() => setPriorityModalVisible(false)}
+          >
+            <View style={styles.overlay}>
+              <View style={styles.priorityList}>
+                {["low", "medium", "high", "urgent"].map((p) => (
+                  <TouchableOpacity
+                    key={p}
+                    style={styles.priorityItem}
+                    onPress={() => {
+                      setPriority(p);
+                      setPriorityModalVisible(false);
+                    }}
+                  >
+                    <Text style={styles.priorityItemText}>{p}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </Modal>
 
           <TouchableOpacity onPress={handleFilePick} style={styles.fileButton}>
             <Text style={styles.fileButtonText}>
@@ -145,7 +156,34 @@ export default function CreateTicketModal({ visible, onClose, onSuccess }) {
 const styles = StyleSheet.create({
   modalContainer: { flex: 1, justifyContent: "center", backgroundColor: "rgba(0,0,0,0.3)" },
   modalContent: { margin: 20, backgroundColor: "white", borderRadius: 10, padding: 20 },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
+  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 16 },
+  field: { marginBottom: 12 },
+  prioritySelector: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    marginBottom: 12,
+  },
+  priorityText: { fontSize: 16, color: "#333" },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  priorityList: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 16,
+    width: "70%",
+  },
+  priorityItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+  },
+  priorityItemText: { fontSize: 16, textAlign: "center" },
   fileButton: { marginTop: 10, padding: 10, backgroundColor: "#eee", borderRadius: 6 },
   fileButtonText: { color: "#333" },
   buttonRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },

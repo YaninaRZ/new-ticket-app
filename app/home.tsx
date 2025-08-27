@@ -78,7 +78,13 @@ export default function Index() {
       const formatted: Ticket[] = response.data.tickets.map((ticket) => ({
         id: ticket.id,
         title: ticket.title,
-        author: ticket.author || "Inconnu",
+        author:
+        ticket.username ||
+        ticket.author_name ||
+        ticket.authorUsername ||
+        ticket.author?.username ||
+        ticket.author ||               // fallback si l'API met déjà une string lisible
+        "Inconnu",
         date: new Date(ticket.created).toLocaleDateString(),
         priority: ticket.priority,
         status: ticket.status,
@@ -225,7 +231,13 @@ setOpenedCount(opened);
           const formattedTicket: Ticket = {
             id: newTicket.id,
             title: newTicket.title,
-            author: newTicket.author || "Inconnu",
+            author:
+            newTicket.username ||
+            newTicket.author_name ||
+            newTicket.authorUsername ||
+            newTicket.author?.username ||
+            newTicket.author ||
+            "Inconnu",
             date: new Date(newTicket.created).toLocaleDateString(),
             priority: newTicket.priority,
           };

@@ -27,6 +27,12 @@ interface Comment {
   content: string;
 }
 
+interface Attachment {
+  id: string;
+  filename: string;
+  url?: string;
+}
+
 export default function TicketDetail() {
   const router = useRouter();
   const { id, title, author, date, priority, status } = useLocalSearchParams<{
@@ -38,7 +44,7 @@ export default function TicketDetail() {
     status?: "opened" | "closed";
   }>();
 
-  const { user: currentUser } = useAuth(); // 👈 récupère l’utilisateur connecté
+  const { user: currentUser } = useAuth();
 
   // ✅ States
   const [isClosed, setIsClosed] = useState(status === "closed");
@@ -48,13 +54,14 @@ export default function TicketDetail() {
   const [assignedUser, setAssignedUser] = useState<User | null>(null);
 
   const [comments, setComments] = useState<Comment[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
-  const attachments = [
-    { id: "1", filename: "capture-erreur.png" },
-    { id: "2", filename: "logs.txt" },
-  ];
+  const [ticketDescription, setTicketDescription] = useState<string>("");
+  const [ticketPriority, setTicketPriority] = useState<string>(priority || "");
+  const [ticketCompany, setTicketCompany] = useState<string>("");
+  const [ticketProject, setTicketProject] = useState<string>("");
 
-  const priorityColor = priority === "urgent" ? "#dc2626" : "#16a34a";
+  const priorityColor = ticketPriority === "urgent" ? "#dc2626" : "#16a34a";
 
   // ✅ API calls
   const toggleTicketStatus = async () => {
@@ -112,6 +119,35 @@ export default function TicketDetail() {
           id: res.data.assignedUser.id,
         });
       }
+
+      if (res.data.ticket) {
+        setTicketDescription(res.data.ticket.description || "");
+        setTicketPriority(res.data.ticket.priority || "");
+        setTicketCompany(res.data.ticket.company_name || "");
+        setTicketProject(res.data.ticket.project_name || "");
+      }
+
+      // 🔻 parse files: string JSON -> array
+      if (res.data.ticket?.files) {
+        try {
+          const rawList: string[] = JSON.parse(res.data.ticket.files) || [];
+          const list = rawList.map((fname, idx) => {
+            const displayName = decodeURIComponent(fname); // joli pour l’UI
+            const url = `https://ticketing.development.atelier.ovh/api/files/tickets/${res.data.ticket.id}/${fname}`;
+            return {
+              id: `${res.data.ticket.id}-${idx}`,
+              filename: displayName,
+              url,
+            };
+          });
+          setAttachments(list);
+        } catch (e) {
+          console.error("❌ Erreur parsing files", e);
+          setAttachments([]);
+        }
+      } else {
+        setAttachments([]);
+      }
     } catch (err) {
       console.error("❌ Erreur fetch ticket details", err);
     }
@@ -123,7 +159,7 @@ export default function TicketDetail() {
       const formatted = res.data.comments.map((c: any) => ({
         id: c.id,
         content: c.content,
-        author: c.username, // 👈 affiche bien le username
+        author: c.username,
       }));
       setComments(formatted);
     } catch (err: any) {
@@ -144,7 +180,7 @@ export default function TicketDetail() {
       const newComment = {
         id: res.data.id ?? Date.now().toString(),
         content,
-        author: res.data.username ?? currentUser?.username ?? "Moi", // 👈 utilise ton vrai username
+        author: res.data.username ?? currentUser?.username ?? "Moi",
       };
 
       setComments((prev) => [...prev, newComment]);
@@ -165,7 +201,11 @@ export default function TicketDetail() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <TicketHeader
           title={title}
+          description={ticketDescription}
+          company={ticketCompany}
+          project={ticketProject}
           id={id}
+          priority={ticketPriority}
           priorityColor={priorityColor}
           isClosed={isClosed}
           onToggle={toggleTicketStatus}
@@ -179,6 +219,7 @@ export default function TicketDetail() {
           onAssign={assignTicket}
         />
 
+        {/* ✅ Fichiers dynamiques */}
         <TicketAttachments attachments={attachments} />
 
         <TicketComments comments={comments} onAdd={addComment} />
@@ -193,7 +234,6 @@ export default function TicketDetail() {
           marginTop: 16,
         }}
       >
-        {/* Bouton Retour */}
         <Pressable
           onPress={() => router.back()}
           style={{
@@ -207,7 +247,6 @@ export default function TicketDetail() {
           <Text style={{ color: "#fff", fontWeight: "600" }}>← Retour</Text>
         </Pressable>
 
-        {/* Bouton Supprimer */}
         <Pressable
           onPress={() => setDeleteModalVisible(true)}
           style={{
