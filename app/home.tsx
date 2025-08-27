@@ -51,7 +51,7 @@ export default function Index() {
   const [closedCount, setClosedCount] = useState(0);
   const [openedCount, setOpenedCount] = useState(0);
   
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2Mjk3NzczLCJpYXQiOjE3NTYyMTEzNzN9.PYH5iWuPIMoZEd_F1uEbaVKpf8BB41osYPBKAvTXKwk";
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2Mzg0NTUyLCJpYXQiOjE3NTYyOTgxNTJ9.Ite7La6dr3A7WsMBhReGHnO1q115ks7ThWRVCMnVtok";
 
   const fetchTickets = async () => {
     try {
