@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/services/api";
-import { Mail } from "lucide-react-native";
+import { Mail, Pencil } from "lucide-react-native";
+
 import React, { useEffect, useState } from "react";
 import {
   Image,
@@ -13,51 +14,140 @@ import {
   View,
 } from "react-native";
 
+type Profile = {
+  id: string;
+  email: string;
+  username: string;
+};
+
 export default function Profil() {
+  const { user } = useAuth(); // fallback si besoin
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const { user } = useAuth();
 
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState<boolean>(true);
+
+  const [totalCount, setTotalCount] = useState(0);
   const [closedCount, setClosedCount] = useState(0);
-  const [openedCount, setOpenedCount] = useState(0);
+  const [openedCount, setOpenedCount] = useState(0); // <- tu peux le garder ou le retirer
 
-  const fetchMyTickets = async () => {
+  // ---- PROFILE ----
+  const fetchProfile = async () => {
+    setLoadingProfile(true);
     try {
-      if (!user?.id) return;
-      const res = await api.get(`/tickets?author=${user.id}`);
-      const tickets = res.data.tickets || [];
+      let res;
+      try {
+        // 1) route principale
+        res = await api.get("/profile");
+      } catch (e) {
+        console.warn("⚠️ /profile -> 404, j'essaie /mobile/profile");
+        res = await api.get("/mobile/profile");
+      }
+  
+      // 👉 d'après ton log: { profile: { id, email, username, ... } }
+      const src = res.data?.profile ?? res.data?.user ?? res.data ?? {};
+  
+      const p: Profile = {
+        id: src.id ?? user?.id ?? "",
+        email: src.email ?? user?.email ?? "",
+        username: src.username ?? src.name ?? user?.username ?? "Utilisateur",
+      };
+  
+      setProfile(p);
+    } catch (err) {
+      console.error("❌ Erreur récupération profil :", err);
+      // fallback sur useAuth si dispo
+      if (user?.id) {
+        setProfile({
+          id: user.id,
+          email: user.email ?? "",
+          username: user.username ?? "Utilisateur",
+        });
+      }
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+  
+  
 
-      const closed = tickets.filter((t: any) => t.status === "closed").length;
-      const opened = tickets.filter((t: any) => t.status === "opened").length;
-
+  // ---- MY TICKETS ----
+  const fetchMyTickets = async (authorId: string) => {
+    try {
+      if (!authorId) return;
+  
+      // ✅ 1) Route recommandée
+      let res = await api.get(`/tickets/user/${authorId}`, {
+        params: { page: 1, limit: 200 }, // si la route supporte la pagination
+      });
+  
+      // Normalise la forme des données (certains back renvoient {tickets: [...]}, d’autres un tableau direct)
+      let tickets: any[] = Array.isArray(res.data) ? res.data : (res.data?.tickets ?? []);
+  
+      // 🔁 2) Fallback si jamais 404/structure vide → on tente l’ancienne route mobile
+      if (!tickets.length) {
+        try {
+          const alt = await api.get(`/mobile/tickets`, {
+            params: { author: authorId, page: 1, limit: 200 },
+          });
+          tickets = alt.data?.tickets ?? [];
+        } catch {
+          // dernier secours : récupère tout puis filtre côté client
+          const altAll = await api.get(`/mobile/tickets`, { params: { page: 1, limit: 200 } });
+          const all = altAll.data?.tickets ?? [];
+          tickets = all.filter((t: any) => t.author === authorId);
+        }
+      }
+  
+      // 🧮 Compteurs
+      setTotalCount(tickets.length);
+      const closed = tickets.filter((t) => t.status === "closed").length;
+      const opened = tickets.filter((t) => t.status === "opened").length;
+  
       setClosedCount(closed);
       setOpenedCount(opened);
     } catch (err) {
       console.error("❌ Erreur récupération tickets user :", err);
     }
   };
+  
+  
 
   useEffect(() => {
-    fetchMyTickets();
-  }, [user]);
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    if (profile?.id) fetchMyTickets(profile.id);
+  }, [profile?.id]);
 
   const handleDelete = () => {
     setIsModalVisible(false);
     console.log("Suppression du compte...");
-    // 👉 ajoute ici la vraie logique de suppression
   };
 
+  const displayUsername =
+    (loadingProfile ? "Chargement..." : profile?.username) || "Utilisateur";
+  const displayEmail = loadingProfile ? "" : (profile?.email ?? "");
+
   return (
+    
     <View style={styles.container}>
       {/* Avatar */}
-      <View style={styles.avatarContainer}>
-        <Image
-          source={{
-            uri: "https://randomuser.me/api/portraits/women/44.jpg",
-          }}
-          style={styles.avatar}
-        />
-        <Text style={styles.name}>{user?.username || "Utilisateur"}</Text>
-      </View>
+      {/* Header / Avatar + bouton Modifier */}
+<View style={styles.avatarContainer}>
+  <TouchableOpacity style={styles.editBtn} onPress={() => console.log("Editar profil")}>
+    <Pencil size={16} color="#000" />
+    <Text style={styles.editText}>Modifier</Text>
+  </TouchableOpacity>
+
+  <Image
+    source={{ uri: "https://randomuser.me/api/portraits/women/44.jpg" }}
+    style={styles.avatar}
+  />
+  <Text style={styles.name}>{displayUsername}</Text>
+</View>
+
 
       {/* Email */}
       <Text style={styles.sectionTitle}>Votre mail</Text>
@@ -65,23 +155,38 @@ export default function Profil() {
         <Mail color="#A1A1AA" style={styles.icon} size={18} />
         <TextInput
           style={styles.input}
-          placeholder="xxx@gmail.com"
+          placeholder={loadingProfile ? "Chargement..." : ""}
           placeholderTextColor="#A1A1AA"
           editable={false}
-          value={user?.email || ""}
+          value={displayEmail}
         />
       </View>
 
-      {/* Tickets */}
-      <Text style={styles.sectionTitle}>Vos Tickets</Text>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Tickets fermés</Text>
-        <Text style={styles.cardValue}>{closedCount}</Text>
-      </View>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Tickets ouverts</Text>
-        <Text style={styles.cardValue}>{openedCount}</Text>
-      </View>
+
+
+{/* Tickets */}
+<Text style={styles.sectionTitle}>Vos Tickets</Text>
+
+{/* Carte large pour le total */}
+<View style={styles.cardFull}>
+  <Text style={styles.cardTitle}>Total</Text>
+  <Text style={styles.cardValue}>{totalCount}</Text>
+</View>
+
+{/* Ligne pour fermés / ouverts */}
+<View style={styles.cardsRow}>
+  <View style={styles.cardHalf}>
+    <Text style={styles.cardTitle}>Fermés</Text>
+    <Text style={styles.cardValue}>{closedCount}</Text>
+  </View>
+  <View style={styles.cardHalf}>
+    <Text style={styles.cardTitle}>Ouverts</Text>
+    <Text style={styles.cardValue}>{openedCount}</Text>
+  </View>
+</View>
+
+
+
 
       {/* Boutons */}
       <TouchableOpacity style={styles.logoutBtn}>
@@ -95,7 +200,7 @@ export default function Profil() {
         <Text style={styles.deleteText}>Supprimer le compte</Text>
       </TouchableOpacity>
 
-      {/* Modal de confirmation */}
+      {/* Modal */}
       <Modal
         visible={isModalVisible}
         transparent
@@ -145,9 +250,47 @@ export default function Profil() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFF", padding: 24 },
-  avatarContainer: { alignItems: "center", marginBottom: 32 },
-  avatar: { width: 120, height: 120, borderRadius: 60 },
+
+  // — Header
+  avatarContainer: {
+    alignItems: "center",
+    marginBottom: 24,
+    position: "relative",  
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginTop: 40
+  },
   name: { fontSize: 20, fontWeight: "700", marginTop: 12 },
+
+  editBtn: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#fff",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  editText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#111827",
+  },
+
+
   sectionTitle: { fontWeight: "600", marginBottom: 8, fontSize: 16 },
   inputWrapper: {
     flexDirection: "row",
@@ -240,4 +383,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btnBlackText: { color: "#fff", fontWeight: "600" },
+
+  cardsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+
+
+  cardFull: {
+    backgroundColor: "#fff",
+    paddingVertical: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginBottom: 16,
+    alignItems: "center", // centrer le texte
+  },
+  
+  cardsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  
+  cardHalf: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginHorizontal: 4,
+    alignItems: "center",
+  },
+  
+  
 });

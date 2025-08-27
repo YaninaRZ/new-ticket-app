@@ -60,6 +60,7 @@ export default function TicketDetail() {
   const [ticketPriority, setTicketPriority] = useState<string>(priority || "");
   const [ticketCompany, setTicketCompany] = useState<string>("");
   const [ticketProject, setTicketProject] = useState<string>("");
+  const [ticketAuthor, setTicketAuthor] = useState<string>(author || "");
 
   const priorityColor =
     ticketPriority === "urgent" ? "#dc2626" : "#16a34a";
@@ -127,6 +128,21 @@ export default function TicketDetail() {
         setTicketCompany(res.data.ticket.company_name || "");
         setTicketProject(res.data.ticket.project_name || "");
       }
+    
+      if (res.data.author) {
+      if (typeof res.data.author === "object" && res.data.author.username) {
+        setTicketAuthor(res.data.author.username);
+      } else if (typeof res.data.author === "string") {
+        // cas où c'est un ID → on fetch le user
+        try {
+          const userRes = await api.get(`/users/${res.data.author}`);
+          setTicketAuthor(userRes.data.username || res.data.author);
+        } catch (e) {
+          console.error("❌ Erreur fetch auteur par ID", e);
+          setTicketAuthor(res.data.author); // fallback ID
+        }
+      }
+    }
 
       // 🔻 Fichiers (string JSON -> array)
       if (res.data.ticket?.files) {
@@ -240,7 +256,8 @@ export default function TicketDetail() {
           onToggle={toggleTicketStatus}
         />
 
-        <TicketInfo author={author} date={date} />
+        <TicketInfo author={ticketAuthor} date={date} />
+
 
         <TicketAssign
           users={users}
