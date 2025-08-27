@@ -167,38 +167,56 @@ export default function TicketDetail() {
       console.error("❌ Erreur fetch comments", err?.response?.data || err);
     }
   };
-
   const addComment = async (content: string) => {
     try {
+      if (!id) {
+        console.warn("⚠️ Pas d'id de ticket, impossible d'ajouter un commentaire.");
+        return;
+      }
+  
       const formData = new FormData();
-      formData.append("ticket_id", id as string);
-      formData.append("content", content);
-
+      formData.append("ticket_id", String(id));
+      if (content?.trim()) formData.append("content", content.trim());
+  
       const res = await api.post(`/comments`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
-      const newComment = {
-        id: res.data.id ?? Date.now().toString(),
-        content,
-        author: res.data.username ?? currentUser?.username ?? "Moi",
-      };
-
-      setComments((prev) => [...prev, newComment]);
+  
+      // L'API peut renvoyer soit directement l'objet, soit { comment: {...} }
+      const server = (res.data?.comment ?? res.data) as any;
+  
+      if (server?.id) {
+        // ✅ On a un vrai id retourné par le backend → push immédiat
+        const newComment = {
+          id: server.id,
+          content: server.content ?? content,
+          author: server.username ?? currentUser?.username ?? "Moi",
+        };
+        setComments((prev) => [...prev, newComment]);
+      } else {
+        // 🔁 Pas d'ID fiable dans la réponse → on refetch pour récupérer les vrais IDs
+        await fetchComments();
+      }
     } catch (err: any) {
       console.error("❌ Erreur ajout commentaire", err?.response?.data || err);
     }
   };
+  
+  
 
   // ✅ suppression d’un commentaire
   const deleteComment = async (commentId: string) => {
     try {
-      await api.delete(`/comments/${commentId}`); // adapte si ton endpoint diffère
+      console.log(`🗑️ Suppression du commentaire ${commentId}...`);
+      await api.delete(`/comments/${commentId}`); // ✅ chemin correct
+      // mise à jour du state local
       setComments((prev) => prev.filter((c) => c.id !== commentId));
-    } catch (err) {
-      console.error("❌ Erreur suppression commentaire", err);
+      console.log("✅ Commentaire supprimé !");
+    } catch (err: any) {
+      console.error("❌ Erreur suppression commentaire", err.response?.data || err.message);
     }
   };
+  
 
   // ✅ useEffect
   useEffect(() => {
