@@ -33,27 +33,11 @@ export default function TicketHeader({
         <Text style={{ fontSize: 12, color: "#6B7280" }}>Priorité : {priority}</Text>
       </View>
 
-      {/* Titre + bouton état */}
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={{ fontSize: 20, fontWeight: "700" }}>
-            {title || `Titre du ticket N°${id}`}
-          </Text>
-
-          {/* Description */}
-          {description ? (
-            <Text style={{ fontSize: 18, color: "#374151", marginTop: 4 }}>
-              {description}
-            </Text>
-          ) : null}
-
-          {/* Projet / Société */}
-          {(project || company) ? (
-            <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>
-              {project ? `Projet : ${project}` : ""}{project && company ? " • " : ""}{company ? `Société : ${company}` : ""}
-            </Text>
-          ) : null}
-        </View>
+      {/* Ligne titre + bouton */}
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <Text style={{ fontSize: 20, fontWeight: "700", flex: 1, marginRight: 12 }}>
+          {title || `Titre du ticket N°${id}`}
+        </Text>
 
         <Pressable
           onPress={onToggle}
@@ -69,6 +53,20 @@ export default function TicketHeader({
           </Text>
         </Pressable>
       </View>
+
+      {/* Description en dessous */}
+      {description ? (
+        <Text style={{ fontSize: 16, lineHeight: 22, color: "#374151", marginTop: 6 }}>
+          {description}
+        </Text>
+      ) : null}
+
+      {/* Projet / Société */}
+      {(project || company) ? (
+        <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>
+          {project ? `Projet : ${project}` : ""}{project && company ? " • " : ""}{company ? `Société : ${company}` : ""}
+        </Text>
+      ) : null}
     </View>
   );
 }
