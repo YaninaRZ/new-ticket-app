@@ -46,7 +46,7 @@ export default function TicketDetail() {
 
   const { user: currentUser } = useAuth();
 
-  // ✅ States
+  // ✅ States principaux
   const [isClosed, setIsClosed] = useState(status === "closed");
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
@@ -61,7 +61,8 @@ export default function TicketDetail() {
   const [ticketCompany, setTicketCompany] = useState<string>("");
   const [ticketProject, setTicketProject] = useState<string>("");
 
-  const priorityColor = ticketPriority === "urgent" ? "#dc2626" : "#16a34a";
+  const priorityColor =
+    ticketPriority === "urgent" ? "#dc2626" : "#16a34a";
 
   // ✅ API calls
   const toggleTicketStatus = async () => {
@@ -127,12 +128,12 @@ export default function TicketDetail() {
         setTicketProject(res.data.ticket.project_name || "");
       }
 
-      // 🔻 parse files: string JSON -> array
+      // 🔻 Fichiers (string JSON -> array)
       if (res.data.ticket?.files) {
         try {
           const rawList: string[] = JSON.parse(res.data.ticket.files) || [];
           const list = rawList.map((fname, idx) => {
-            const displayName = decodeURIComponent(fname); // joli pour l’UI
+            const displayName = decodeURIComponent(fname);
             const url = `https://ticketing.development.atelier.ovh/api/files/tickets/${res.data.ticket.id}/${fname}`;
             return {
               id: `${res.data.ticket.id}-${idx}`,
@@ -159,11 +160,11 @@ export default function TicketDetail() {
       const formatted = res.data.comments.map((c: any) => ({
         id: c.id,
         content: c.content,
-        author: c.username,
+        author: c.username, // on affiche bien le username
       }));
       setComments(formatted);
     } catch (err: any) {
-      console.error("❌ Erreur fetch comments", err.response?.data || err);
+      console.error("❌ Erreur fetch comments", err?.response?.data || err);
     }
   };
 
@@ -185,7 +186,17 @@ export default function TicketDetail() {
 
       setComments((prev) => [...prev, newComment]);
     } catch (err: any) {
-      console.error("❌ Erreur ajout commentaire", err.response?.data || err);
+      console.error("❌ Erreur ajout commentaire", err?.response?.data || err);
+    }
+  };
+
+  // ✅ suppression d’un commentaire
+  const deleteComment = async (commentId: string) => {
+    try {
+      await api.delete(`/comments/${commentId}`); // adapte si ton endpoint diffère
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch (err) {
+      console.error("❌ Erreur suppression commentaire", err);
     }
   };
 
@@ -219,10 +230,15 @@ export default function TicketDetail() {
           onAssign={assignTicket}
         />
 
-        {/* ✅ Fichiers dynamiques */}
+        {/* ✅ Pièces jointes dynamiques */}
         <TicketAttachments attachments={attachments} />
 
-        <TicketComments comments={comments} onAdd={addComment} />
+        {/* ✅ Commentaires + suppression */}
+        <TicketComments
+          comments={comments}
+          onAdd={addComment}
+          onDelete={deleteComment}
+        />
       </ScrollView>
 
       <View
