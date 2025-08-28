@@ -12,6 +12,7 @@ interface Props {
   priorityColor: string;
   isClosed: boolean;
   onToggle: () => void;
+  onEdit?: () => void; 
 }
 
 export default function TicketHeader({
@@ -24,17 +25,49 @@ export default function TicketHeader({
   priorityColor,
   isClosed,
   onToggle,
+  onEdit,
 }: Props) {
   return (
     <View style={{ marginBottom: 16 }}>
-      {/* Ligne priorité */}
-      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-        <CircleIcon color={priorityColor} style={{ width: 8, height: 8, marginRight: 6 }} />
-        <Text style={{ fontSize: 12, color: "#6B7280" }}>Priorité : {priority}</Text>
+      {/* Ligne priorité + bouton modifier */}
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 30 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <CircleIcon color={priorityColor} style={{ width: 8, height: 8, marginRight: 6 }} />
+          <Text style={{ fontSize: 12, color: "#6B7280" }}>Priorité : {priority}</Text>
+        </View>
+
+      
+         {onEdit && (
+          <Pressable
+            onPress={onEdit}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              backgroundColor: "#fff",
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: "#E5E7EB",
+              shadowColor: "#000",
+              shadowOpacity: 0.08,
+              shadowOffset: { width: 0, height: 1 },
+              shadowRadius: 2,
+              elevation: 2,
+           
+            }}
+          >
+            <Text style={{ color: "#111827", fontWeight: "600", fontSize: 12 }}>
+              Modifier
+            </Text>
+          </Pressable>
+        )}
+
       </View>
 
-      {/* Ligne titre + bouton */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+      {/* Ligne titre + bouton statut */}
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", }}>
         <Text style={{ fontSize: 20, fontWeight: "700", flex: 1, marginRight: 12 }}>
           {title || `Titre du ticket N°${id}`}
         </Text>
@@ -46,6 +79,7 @@ export default function TicketHeader({
             paddingVertical: 6,
             paddingHorizontal: 12,
             borderRadius: 6,
+           
           }}
         >
           <Text style={{ color: "#fff", fontWeight: "600", fontSize: 12 }}>
