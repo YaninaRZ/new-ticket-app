@@ -5,13 +5,12 @@ import api from "@/services/api";
 import { Mail, Pencil } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 type Profile = { id: string; email: string; username: string };
@@ -145,10 +144,19 @@ export default function Profil() {
             <Text style={styles.editText}>Modifier</Text>
           </TouchableOpacity>
 
-          <Image
-            source={{ uri: "https://randomuser.me/api/portraits/women/44.jpg" }}
-            style={styles.avatar}
-          />
+          {profile?.username ? (
+  <View style={styles.avatarInitials}>
+    <Text style={styles.avatarLetter}>
+      {profile.username.charAt(0).toUpperCase()}
+    </Text>
+  </View>
+) : (
+  <View style={styles.avatarInitials}>
+    <Text style={styles.avatarLetter}>?</Text>
+  </View>
+)}
+
+
           <Text style={styles.name}>{displayUsername}</Text>
         </View>
 
@@ -293,5 +301,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 16,
   },
+
   deleteText: { color: "#DC2626", fontSize: 16, fontWeight: "600" },
+  avatarInitials: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginTop: 40,
+    backgroundColor: "#FACC15", // jaune style Tailwind "yellow-400"
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarLetter: {
+    fontSize: 48,
+    fontWeight: "700",
+    color: "#fff", // lettre blanche pour contraster
+  },
+  
 });

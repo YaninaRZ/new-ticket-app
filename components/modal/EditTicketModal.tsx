@@ -124,9 +124,7 @@ export default function EditTicketModal({
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.hint}>
-            Tu peux laisser un champ vide pour ne pas le modifier.
-          </Text>
+       
         </View>
       </KeyboardAvoidingView>
     </Modal>
