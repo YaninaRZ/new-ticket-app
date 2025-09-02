@@ -1,91 +1,99 @@
+import { Button, ButtonText } from "@gluestack-ui/themed";
 import {
-  Button,
-  ButtonText,
-  Center,
-  GluestackUIProvider,
-  Heading,
-  Text,
-  VStack
-} from "@gluestack-ui/themed";
-import axios from "axios";
-import * as Google from "expo-auth-session/providers/google";
-import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store"; // 👈 ajout
-import * as WebBrowser from "expo-web-browser";
-import React, { useEffect } from "react";
+  GoogleSignin,
+  GoogleSigninButton,
+  isErrorWithCode,
+  isNoSavedCredentialFoundResponse,
+  isSuccessResponse,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
+import React, { useEffect, useState } from "react";
+import { Alert, ScrollView, Text, View } from "react-native";
 
-WebBrowser.maybeCompleteAuthSession();
+// ⚠️ Remplace par TON Client Web (OAuth "Application Web")
+const WEB_CLIENT_ID =
+  "135662705560-16cbfrutbfrdeqnkga4hm5cn5ia93urv.apps.googleusercontent.com";
 
-const App = () => {
-  const router = useRouter();
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    iosClientId: "135662705560-dij18ofncp8trfsabc3m4p74b88qlpkg.apps.googleusercontent.com",
-    androidClientId: "135662705560-gfl6qm7suem5ji83ntmvdtql501c6kvc.apps.googleusercontent.com",
-    webClientId: "135662705560-16cbfrutbfrdeqnkga4hm5cn5ia93urv.apps.googleusercontent.com",
-  });
+export default function App() {
+  const [userInfo, setUserInfo] = useState<any>(null);
 
   useEffect(() => {
-    const fetchGoogleData = async () => {
-      if (response?.type === "success") {
-        const { authentication } = response;
-        console.log("✅ Google Token reçu :", authentication?.accessToken);
+    GoogleSignin.configure({
+      webClientId: WEB_CLIENT_ID,
+      iosClientId: "135662705560-dij18ofncp8trfsabc3m4p74b88qlpkg.apps.googleusercontent.com"
+      // NE PAS mettre iosClientId si tu as déjà iosUrlScheme via le plugin Expo
+      // scopes: ["openid", "profile", "email"], // par défaut OK
+    });
+  }, []);
 
-        try {
-          const backendResponse = await axios.post(
-            "https://ticketing.development.atelier.ovh/api/mobile/auth/google-login",
-            { access_token: authentication?.accessToken },
-            {
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          console.log("✅ Backend login success:", backendResponse.data);
-
-          // ✅ Étape 1 : stocker access_token, refresh_token et user
-          const { access_token, refresh_token, user } = backendResponse.data;
-          await SecureStore.setItemAsync("access_token", access_token);
-          await SecureStore.setItemAsync("refresh_token", refresh_token);
-          await SecureStore.setItemAsync("user", JSON.stringify(user));
-
-          // Redirection après login
-          router.push("/home");
-        } catch (err) {
-          console.error("❌ Backend error:", err);
-        }
+  const handleGoogleSignIn = async () => {
+    try {
+      // iOS: pas besoin de hasPlayServices()
+      const response = await GoogleSignin.signIn();
+      if (isSuccessResponse(response)) {
+        setUserInfo(response.data); // contient .user et .idToken si webClientId
+      } else {
+        // L’utilisateur a annulé
       }
-    };
+    } catch (error: unknown) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            Alert.alert("Connexion déjà en cours…");
+            break;
+          default:
+            Alert.alert("Erreur Google Sign-In", error.code);
+        }
+      } else {
+        Alert.alert("Erreur inattendue", String(error));
+      }
+    }
+  };
 
-    fetchGoogleData();
-  }, [response]);
+  const handleGoogleSignOut = async () => {
+    try {
+      await GoogleSignin.signOut();
+      setUserInfo(null);
+    } catch (e) {
+      Alert.alert("Erreur", "Échec de la déconnexion");
+    }
+  };
+
+  const getCurrentUser = async () => {
+    try {
+      const response = await GoogleSignin.signInSilently();
+      if (isSuccessResponse(response)) {
+        setUserInfo(response.data);
+      } else if (isNoSavedCredentialFoundResponse(response)) {
+        Alert.alert("Aucun utilisateur", "Aucun identifiant enregistré.");
+      }
+    } catch {
+      Alert.alert("Erreur", "Impossible de récupérer l’utilisateur courant.");
+    }
+  };
 
   return (
-    <GluestackUIProvider>
-      <Center className="flex-1 bg-white px-4 pb-10 justify-center">
-        <VStack className="bg-white w-full max-w-[400px] p-8 rounded-2xl border border-gray-200 shadow-md">
-          <Heading className="text-2xl text-gray-900 text-center mb-1">
-            Log in
-          </Heading>
-          <Text className="text-sm text-gray-500 text-center mb-6">
-            Login to start using Brex
-          </Text>
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 }}>
+      {userInfo ? (
+        <ScrollView style={{ gap: 12, maxWidth: 320 }}>
+          <Text selectable>{JSON.stringify(userInfo, null, 2)}</Text>
 
-          <Button
-            className="w-full bg-black py-3 rounded-lg"
-            onPress={() => promptAsync()}
-            disabled={!request}
-          >
-            <ButtonText className="text-white font-semibold text-base text-center">
-              Login with Google
-            </ButtonText>
+          <Button onPress={handleGoogleSignOut}>
+            <ButtonText>Sign Out</ButtonText>
           </Button>
-        </VStack>
-      </Center>
-    </GluestackUIProvider>
-  );
-};
 
-export default App;
+          <Button onPress={getCurrentUser}>
+            <ButtonText>Get current user</ButtonText>
+          </Button>
+        </ScrollView>
+      ) : (
+        <GoogleSigninButton
+          style={{ width: 220, height: 48 }}
+          size={GoogleSigninButton.Size.Wide}
+          color={GoogleSigninButton.Color.Dark}
+          onPress={handleGoogleSignIn}
+        />
+      )}
+    </View>
+  );
+}

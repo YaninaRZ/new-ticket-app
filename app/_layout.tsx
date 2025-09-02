@@ -1,22 +1,19 @@
-import React, { useState } from "react";
-import { Stack } from "expo-router";
 import {
   Drawer,
   DrawerBackdrop,
-  DrawerContent,
-  DrawerHeader,
   DrawerBody,
-  DrawerFooter,
   DrawerCloseButton,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
 } from "@/components/ui/drawer";
-import "@/global.css";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import Header from "@/components/ui/Header";
+import "@/global.css";
+import { Stack, usePathname, useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, StyleSheet, Text, Pressable, TouchableOpacity } from "react-native";
-import { useRouter, usePathname  } from "expo-router";
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Image } from "react-native";
 
 
 export default function RootLayout() {
@@ -68,7 +65,7 @@ export default function RootLayout() {
       }}
     >
       <Text style={[styles.navIcon, pathname === "/home" && styles.navIconActive]}>⚡</Text>
-      <Text style={[styles.navText, pathname === "/home" && styles.navTextActive]}>Tickets</Text>
+      <Text style={[styles.navText, pathname === "/home" && styles.navTextActive]}>Tickets yo</Text>
     </Pressable>
 
     {/* Profil */}
