@@ -7,7 +7,7 @@ const api = axios.create({
 // 🔑 TEMP : token en dur (juste pour tester)
 api.interceptors.request.use((config) => {
   const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2OTAyMTcwLCJpYXQiOjE3NTY4MTU3NzB9.TWYqP6VvJTQUarTV0-kESz51XlpF-mTnnSGZ5QBoFyA"; 
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiam1haXZrZjFuaHgyeW41IiwiZXhwIjoxNzU2OTk3NzM1LCJpYXQiOjE3NTY5MTEzMzV9.NpwEgdMnXsojSV7X7FXxKmXEHrtVz3OVJf7rA3w0PrI"; 
   config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
